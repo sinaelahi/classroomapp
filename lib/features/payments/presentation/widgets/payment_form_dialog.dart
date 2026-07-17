@@ -87,7 +87,7 @@ class _PaymentFormDialogState extends State<PaymentFormDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<int>(
-                initialValue: _selectedStudentId,
+                value: _selectedStudentId,
                 decoration: const InputDecoration(labelText: 'Öğrenci'),
                 items: widget.students
                     .map(
