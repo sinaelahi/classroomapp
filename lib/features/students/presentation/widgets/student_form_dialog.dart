@@ -102,7 +102,7 @@ class _StudentFormDialogState extends State<StudentFormDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<ClassLevel>(
-                initialValue: _selectedLevel,
+                value: _selectedLevel,
                 decoration: const InputDecoration(labelText: 'Sınıf Seviyesi'),
                 items: ClassLevel.values
                     .map(
