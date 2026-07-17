@@ -23,10 +23,16 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  static QueryExecutor _openConnection() {
-    // drift_flutter, masaüstü (Windows/macOS/Linux) ve mobil için
-    // doğru sqlite bağlantısını otomatik seçer, dosyayı uygulamanın
-    // application-support klasörüne koyar.
-    return driftDatabase(name: 'dershane_db');
+ static QueryExecutor _openConnection() {
+    // drift_flutter, masaüstü (Windows/macOS/Linux) ve web için doğru
+    // bağlantıyı otomatik seçer. Web'de sqlite3.wasm + drift_worker.js
+    // dosyalarına ihtiyaç var; bunlar web/ klasörüne konulmalı.
+    return driftDatabase(
+      name: 'dershane_db',
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
+      ),
+    );
   }
 }
