@@ -4,7 +4,7 @@ import '../../domain/usecases/add_payment.dart';
 import '../../domain/usecases/delete_payment.dart';
 import '../../domain/usecases/get_payment_summary.dart';
 import '../../domain/usecases/get_payments.dart';
-import '../../domain/usecases/mark_as_paid.dart';
+import '../../domain/usecases/record_payment.dart';
 import '../../domain/usecases/update_payment.dart';
 import 'payment_event.dart';
 import 'payment_state.dart';
@@ -14,7 +14,7 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   final AddPayment addPayment;
   final UpdatePayment updatePayment;
   final DeletePayment deletePayment;
-  final MarkAsPaid markAsPaid;
+  final RecordPayment recordPayment;
   final GetPaymentSummary getPaymentSummary;
 
   PaymentBloc({
@@ -22,12 +22,12 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     required this.addPayment,
     required this.updatePayment,
     required this.deletePayment,
-    required this.markAsPaid,
+    required this.recordPayment,
     required this.getPaymentSummary,
   }) : super(const PaymentState()) {
     on<LoadPayments>(_onLoadPayments);
     on<AddPaymentRequested>(_onAddPayment);
-    on<MarkPaymentAsPaidRequested>(_onMarkAsPaid);
+    on<RecordPaymentRequested>(_onRecordPayment);
     on<UpdatePaymentRequested>(_onUpdatePayment);
     on<DeletePaymentRequested>(_onDeletePayment);
   }
@@ -91,11 +91,16 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
     );
   }
 
-  Future<void> _onMarkAsPaid(
-    MarkPaymentAsPaidRequested event,
+  Future<void> _onRecordPayment(
+    RecordPaymentRequested event,
     Emitter<PaymentState> emit,
   ) async {
-    final result = await markAsPaid(event.payment);
+    final result = await recordPayment(
+      RecordPaymentParams(
+        payment: event.payment,
+        amountReceived: event.amountReceived,
+      ),
+    );
     result.match(
       (failure) => emit(
         state.copyWith(

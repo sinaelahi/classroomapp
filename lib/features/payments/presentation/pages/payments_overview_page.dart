@@ -21,6 +21,7 @@ import '../bloc/payment_bloc.dart';
 import '../bloc/payment_event.dart';
 import '../bloc/payment_state.dart';
 import '../widgets/payment_form_dialog.dart';
+import '../widgets/payment_record_dialog.dart';
 
 class PaymentsOverviewPage extends StatelessWidget {
   const PaymentsOverviewPage({super.key});
@@ -91,6 +92,24 @@ class _PaymentsOverviewView extends StatelessWidget {
     );
   }
 
+  void _openRecordPayment(BuildContext context, Payment payment) {
+    final bloc = context.read<PaymentBloc>();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => PaymentRecordDialog(
+        payment: payment,
+        onSubmit: (amountReceived) {
+          bloc.add(
+            RecordPaymentRequested(
+              payment: payment,
+              amountReceived: amountReceived,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return DesktopScaffold(
@@ -127,9 +146,15 @@ class _PaymentsOverviewView extends StatelessWidget {
                           Row(
                             children: [
                               _SummaryCard(
-                                label: 'Ödenen',
+                                label: 'Tahsil Edilen',
                                 amount: state.summary.totalPaidAmount,
                                 color: AppColors.mint,
+                              ),
+                              const SizedBox(width: 16),
+                              _SummaryCard(
+                                label: 'Kısmi Kalan',
+                                amount: state.summary.totalPartialRemainingAmount,
+                                color: AppColors.indigo,
                               ),
                               const SizedBox(width: 16),
                               _SummaryCard(
@@ -161,6 +186,8 @@ class _PaymentsOverviewView extends StatelessWidget {
                                           const Divider(height: 1, color: AppColors.border),
                                       itemBuilder: (context, index) {
                                         final payment = state.payments[index];
+                                        final isPartial =
+                                            payment.status == PaymentStatus.partial;
                                         return FadeSlideIn(
                                           index: index,
                                           child: ListTile(
@@ -169,8 +196,13 @@ class _PaymentsOverviewView extends StatelessWidget {
                                               style: AppTextStyles.bodyMedium,
                                             ),
                                             subtitle: Text(
-                                              '${payment.period} · Vade: '
-                                              '${DateFormatter.format(payment.dueDate)}',
+                                              isPartial
+                                                  ? '${payment.period} · Vade: '
+                                                    '${DateFormatter.format(payment.dueDate)} · '
+                                                    '${CurrencyFormatter.format(payment.paidAmount)} ödendi, '
+                                                    '${CurrencyFormatter.format(payment.remainingAmount)} kaldı'
+                                                  : '${payment.period} · Vade: '
+                                                    '${DateFormatter.format(payment.dueDate)}',
                                               style: AppTextStyles.caption,
                                             ),
                                             onTap: () => _openPaymentForm(
@@ -189,14 +221,11 @@ class _PaymentsOverviewView extends StatelessWidget {
                                                 StatusBadge(status: payment.status),
                                                 if (payment.status != PaymentStatus.paid)
                                                   IconButton(
-                                                    icon: const Icon(Icons.check_circle_outline),
+                                                    icon: const Icon(Icons.payments_outlined),
                                                     color: AppColors.mint,
-                                                    tooltip: 'Ödendi olarak işaretle',
-                                                    onPressed: () {
-                                                      context.read<PaymentBloc>().add(
-                                                            MarkPaymentAsPaidRequested(payment),
-                                                          );
-                                                    },
+                                                    tooltip: 'Ödeme al',
+                                                    onPressed: () =>
+                                                        _openRecordPayment(context, payment),
                                                   ),
                                                 IconButton(
                                                   icon: const Icon(Icons.delete_outline),
@@ -245,7 +274,7 @@ class _SummaryCard extends StatelessWidget {
       child: HoverLift(
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -257,14 +286,20 @@ class _SummaryCard extends StatelessWidget {
                       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 8),
-                    Text(label, style: AppTextStyles.caption),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: AppTextStyles.caption,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
                 AnimatedCount(
                   value: amount,
                   formatter: CurrencyFormatter.format,
-                  style: AppTextStyles.figure,
+                  style: AppTextStyles.figureSmall.copyWith(fontSize: 18),
                 ),
               ],
             ),

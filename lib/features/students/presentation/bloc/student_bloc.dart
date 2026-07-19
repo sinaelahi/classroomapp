@@ -54,6 +54,7 @@ class StudentBloc extends Bloc<StudentEvent, StudentState> {
         lastName: event.lastName,
         phoneNumber: event.phoneNumber,
         classLevel: event.classLevel,
+        gender: event.gender,
       ),
     );
     result.match(

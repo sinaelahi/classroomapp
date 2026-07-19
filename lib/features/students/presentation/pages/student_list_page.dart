@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/enums/gender.dart';
 import '../../../../shared/layouts/desktop_scaffold.dart';
 import '../../../../shared/widgets/fade_slide_in.dart';
 import '../../domain/entities/student.dart';
@@ -33,7 +34,7 @@ class _StudentListView extends StatelessWidget {
       context: context,
       builder: (dialogContext) => StudentFormDialog(
         initialStudent: student,
-        onSubmit: (firstName, lastName, phone, level) {
+        onSubmit: (firstName, lastName, phone, level, gender) {
           if (student == null) {
             bloc.add(
               AddStudentRequested(
@@ -41,6 +42,7 @@ class _StudentListView extends StatelessWidget {
                 lastName: lastName,
                 phoneNumber: phone,
                 classLevel: level,
+                gender: gender,
               ),
             );
           } else {
@@ -51,6 +53,7 @@ class _StudentListView extends StatelessWidget {
                   lastName: lastName,
                   phoneNumber: phone,
                   classLevel: level,
+                  gender: gender,
                 ),
               ),
             );
@@ -72,7 +75,7 @@ class _StudentListView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                 Text('Öğrenciler', style: AppTextStyles.heading1),
+                Text('Öğrenciler', style: AppTextStyles.heading1),
                 FilledButton.icon(
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Öğrenci Ekle'),
@@ -110,9 +113,23 @@ class _StudentListView extends StatelessWidget {
                         return FadeSlideIn(
                           index: index,
                           child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: (student.gender == Gender.male
+                                      ? AppColors.indigo
+                                      : AppColors.coral)
+                                  .withOpacity(0.12),
+                              child: Icon(
+                                student.gender == Gender.male
+                                    ? Icons.male_rounded
+                                    : Icons.female_rounded,
+                                color: student.gender == Gender.male
+                                    ? AppColors.indigo
+                                    : AppColors.coral,
+                              ),
+                            ),
                             title: Text(student.fullName, style: AppTextStyles.bodyMedium),
                             subtitle: Text(
-                              '${student.classLevel.label} · ${student.phoneNumber}',
+                              '${student.classLevel.label} · ${student.gender.label} · ${student.phoneNumber}',
                               style: AppTextStyles.caption,
                             ),
                             onTap: () => _openStudentForm(context, student: student),

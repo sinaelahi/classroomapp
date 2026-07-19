@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import '../../../../core/database/app_database.dart' as db;
 import '../../../../core/enums/payment_status.dart';
 import '../../domain/entities/payment.dart';
@@ -12,6 +13,7 @@ extension PaymentRowMapper on db.Payment {
       dueDate: dueDate,
       paidDate: paidDate,
       status: PaymentStatus.fromName(status),
+      paidAmount: paidAmount,
     );
   }
 }
@@ -24,6 +26,8 @@ extension PaymentEntityMapper on Payment {
       period: period,
       dueDate: dueDate,
       status: status.name,
+      paidDate: Value(paidDate),
+      paidAmount: Value(paidAmount),
     );
   }
 }

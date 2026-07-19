@@ -5,6 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/enums/class_level.dart';
+import '../../../../core/enums/gender.dart';
 import '../../../../shared/layouts/desktop_scaffold.dart';
 import '../../../../shared/widgets/fade_slide_in.dart';
 import '../../../students/domain/entities/student.dart';
@@ -24,15 +25,9 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-class _DashboardView extends StatefulWidget {
-  const _DashboardView();
-
-  @override
-  State<_DashboardView> createState() => _DashboardViewState();
-}
-
 class _DashboardViewState extends State<_DashboardView> {
   ClassLevel? _selectedLevel;
+  Gender? _selectedGender;
 
   void _sendMessage(BuildContext context, Student student) {
     // TODO: mesajlaşma API'si bağlanınca burası gerçek isteği atacak.
@@ -58,22 +53,29 @@ class _DashboardViewState extends State<_DashboardView> {
   void _sendGroupMessage(
     BuildContext context,
     ClassLevel? level,
+    Gender? gender,
     List<Student> groupStudents,
   ) {
-    if (level == null) {
+    if (level == null && gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Grup mesajı için önce yukarıdan bir seviye (grup) seç'),
+          content: Text(
+            'Grup mesajı için önce yukarıdan bir seviye ve/veya cinsiyet seç',
+          ),
         ),
       );
       return;
     }
     // TODO: mesajlaşma API'si bağlanınca burada SADECE seçili gruba
     // (groupStudents) mesaj isteği atılacak.
+    final parts = [
+      if (level != null) level.label,
+      if (gender != null) gender.label,
+    ].join(' · ');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '${level.label} grubu: ${groupStudents.length} öğrenciye grup mesajı '
+          '$parts grubu: ${groupStudents.length} öğrenciye grup mesajı '
           'gönderim yakında aktif olacak',
         ),
       ),
@@ -92,7 +94,7 @@ class _DashboardViewState extends State<_DashboardView> {
             Text('Panel', style: AppTextStyles.heading1),
             const SizedBox(height: 6),
             Text(
-              'Tüm öğrenciler. İstersen seviyeye göre filtrele.',
+              'Tüm öğrenciler. İstersen seviyeye ve cinsiyete göre filtrele.',
               style: AppTextStyles.body.copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 20),
@@ -108,11 +110,13 @@ class _DashboardViewState extends State<_DashboardView> {
                     );
                   }
 
-                  final filteredStudents = _selectedLevel == null
-                      ? state.students
-                      : state.students
-                          .where((s) => s.classLevel == _selectedLevel)
-                          .toList();
+                  final filteredStudents = state.students.where((s) {
+                    final levelOk =
+                        _selectedLevel == null || s.classLevel == _selectedLevel;
+                    final genderOk =
+                        _selectedGender == null || s.gender == _selectedGender;
+                    return levelOk && genderOk;
+                  }).toList();
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,6 +125,12 @@ class _DashboardViewState extends State<_DashboardView> {
                         selected: _selectedLevel,
                         onChanged: (level) =>
                             setState(() => _selectedLevel = level),
+                      ),
+                      const SizedBox(height: 10),
+                      _GenderFilterBar(
+                        selected: _selectedGender,
+                        onChanged: (gender) =>
+                            setState(() => _selectedGender = gender),
                       ),
                       const SizedBox(height: 16),
                       Wrap(
@@ -138,13 +148,14 @@ class _DashboardViewState extends State<_DashboardView> {
                           FilledButton.icon(
                             icon: const Icon(Icons.groups_rounded, size: 18),
                             label: Text(
-                              _selectedLevel == null
+                              (_selectedLevel == null && _selectedGender == null)
                                   ? 'Grup Mesajı'
                                   : 'Grup Mesajı (${filteredStudents.length})',
                             ),
                             onPressed: () => _sendGroupMessage(
                               context,
                               _selectedLevel,
+                              _selectedGender,
                               filteredStudents,
                             ),
                           ),
@@ -157,7 +168,7 @@ class _DashboardViewState extends State<_DashboardView> {
                                 child: Text(
                                   state.students.isEmpty
                                       ? 'Henüz öğrenci eklenmedi'
-                                      : 'Bu seviyede öğrenci yok',
+                                      : 'Bu filtreyle eşleşen öğrenci yok',
                                   style: AppTextStyles.body,
                                 ),
                               )
@@ -170,15 +181,30 @@ class _DashboardViewState extends State<_DashboardView> {
                                   ),
                                   itemBuilder: (context, index) {
                                     final student = filteredStudents[index];
+                                    final isMale = student.gender == Gender.male;
                                     return FadeSlideIn(
                                       index: index,
                                       child: ListTile(
+                                        leading: CircleAvatar(
+                                          backgroundColor: (isMale
+                                                  ? AppColors.indigo
+                                                  : AppColors.coral)
+                                              .withOpacity(0.12),
+                                          child: Icon(
+                                            isMale
+                                                ? Icons.male_rounded
+                                                : Icons.female_rounded,
+                                            color: isMale
+                                                ? AppColors.indigo
+                                                : AppColors.coral,
+                                          ),
+                                        ),
                                         title: Text(
                                           student.fullName,
                                           style: AppTextStyles.bodyMedium,
                                         ),
                                         subtitle: Text(
-                                          '${student.classLevel.label} · ${student.phoneNumber}',
+                                          '${student.classLevel.label} · ${student.gender.label} · ${student.phoneNumber}',
                                           style: AppTextStyles.caption,
                                         ),
                                         trailing: OutlinedButton.icon(
@@ -208,6 +234,13 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 }
 
+class _DashboardView extends StatefulWidget {
+  const _DashboardView();
+
+  @override
+  State<_DashboardView> createState() => _DashboardViewState();
+}
+
 class _LevelFilterBar extends StatelessWidget {
   final ClassLevel? selected;
   final ValueChanged<ClassLevel?> onChanged;
@@ -222,7 +255,7 @@ class _LevelFilterBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         children: [
           _FilterChip(
-            label: 'Tümü',
+            label: 'Tüm Seviyeler',
             selected: selected == null,
             onTap: () => onChanged(null),
           ),
@@ -232,6 +265,39 @@ class _LevelFilterBar extends StatelessWidget {
               label: level.label,
               selected: selected == level,
               onTap: () => onChanged(level),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _GenderFilterBar extends StatelessWidget {
+  final Gender? selected;
+  final ValueChanged<Gender?> onChanged;
+
+  const _GenderFilterBar({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          _FilterChip(
+            label: 'Kız + Erkek',
+            selected: selected == null,
+            onTap: () => onChanged(null),
+          ),
+          const SizedBox(width: 8),
+          for (final gender in Gender.values) ...[
+            _FilterChip(
+              label: gender.label,
+              selected: selected == gender,
+              onTap: () => onChanged(gender),
             ),
             const SizedBox(width: 8),
           ],

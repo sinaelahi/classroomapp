@@ -70,22 +70,31 @@ class PaymentRepositoryImpl implements PaymentRepository {
   Future<Either<Failure, PaymentSummary>> getPaymentSummary() async {
     try {
       final rows = await localDataSource.getPayments();
-      double paid = 0, unpaid = 0, upcoming = 0;
-      int paidCount = 0, unpaidCount = 0, upcomingCount = 0;
+      double totalPaid = 0;
+      double unpaid = 0;
+      double upcoming = 0;
+      double partialRemaining = 0;
+      int paidCount = 0, unpaidCount = 0, upcomingCount = 0, partialCount = 0;
 
       for (final row in rows) {
         final status = PaymentStatus.fromName(row.status);
+        // Fiilen tahsil edilen tutar — durumdan bağımsız, her zaman sayılır.
+        totalPaid += row.paidAmount;
+
         switch (status) {
           case PaymentStatus.paid:
-            paid += row.amount;
             paidCount++;
             break;
+          case PaymentStatus.partial:
+            partialRemaining += (row.amount - row.paidAmount).clamp(0, row.amount);
+            partialCount++;
+            break;
           case PaymentStatus.unpaid:
-            unpaid += row.amount;
+            unpaid += row.amount - row.paidAmount;
             unpaidCount++;
             break;
           case PaymentStatus.upcoming:
-            upcoming += row.amount;
+            upcoming += row.amount - row.paidAmount;
             upcomingCount++;
             break;
         }
@@ -93,12 +102,14 @@ class PaymentRepositoryImpl implements PaymentRepository {
 
       return Right(
         PaymentSummary(
-          totalPaidAmount: paid,
+          totalPaidAmount: totalPaid,
           totalUnpaidAmount: unpaid,
           totalUpcomingAmount: upcoming,
+          totalPartialRemainingAmount: partialRemaining,
           paidCount: paidCount,
           unpaidCount: unpaidCount,
           upcomingCount: upcomingCount,
+          partialCount: partialCount,
         ),
       );
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/enums/class_level.dart';
+import '../../../../core/enums/gender.dart';
 import '../../domain/entities/student.dart';
 
 /// Hem yeni öğrenci ekleme hem de mevcut öğrenciyi düzenleme için kullanılır.
@@ -11,6 +12,7 @@ class StudentFormDialog extends StatefulWidget {
     String lastName,
     String phoneNumber,
     ClassLevel classLevel,
+    Gender gender,
   ) onSubmit;
 
   const StudentFormDialog({
@@ -31,6 +33,7 @@ class _StudentFormDialogState extends State<StudentFormDialog> {
   late final TextEditingController _lastNameController;
   late final TextEditingController _phoneController;
   late ClassLevel _selectedLevel;
+  late Gender _selectedGender;
 
   @override
   void initState() {
@@ -39,7 +42,8 @@ class _StudentFormDialogState extends State<StudentFormDialog> {
     _firstNameController = TextEditingController(text: s?.firstName ?? '');
     _lastNameController = TextEditingController(text: s?.lastName ?? '');
     _phoneController = TextEditingController(text: s?.phoneNumber ?? '');
-    _selectedLevel = s?.classLevel ?? ClassLevel.family5;
+    _selectedLevel = s?.classLevel ?? ClassLevel.starter;
+    _selectedGender = s?.gender ?? Gender.male;
   }
 
   @override
@@ -57,6 +61,7 @@ class _StudentFormDialogState extends State<StudentFormDialog> {
       _lastNameController.text.trim(),
       _phoneController.text.trim(),
       _selectedLevel,
+      _selectedGender,
     );
     Navigator.of(context).pop();
   }
@@ -72,6 +77,24 @@ class _StudentFormDialogState extends State<StudentFormDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              SegmentedButton<Gender>(
+                segments: const [
+                  ButtonSegment(
+                    value: Gender.male,
+                    label: Text('Erkek'),
+                    icon: Icon(Icons.male_rounded),
+                  ),
+                  ButtonSegment(
+                    value: Gender.female,
+                    label: Text('Kız'),
+                    icon: Icon(Icons.female_rounded),
+                  ),
+                ],
+                selected: {_selectedGender},
+                onSelectionChanged: (selection) =>
+                    setState(() => _selectedGender = selection.first),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(labelText: 'Ad'),

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../../core/enums/class_level.dart';
+import '../../../../core/enums/gender.dart';
 
 class Student extends Equatable {
   final int? id;
@@ -7,6 +8,7 @@ class Student extends Equatable {
   final String lastName;
   final String phoneNumber;
   final ClassLevel classLevel;
+  final Gender gender;
   final DateTime createdAt;
 
   const Student({
@@ -15,6 +17,7 @@ class Student extends Equatable {
     required this.lastName,
     required this.phoneNumber,
     required this.classLevel,
+    required this.gender,
     required this.createdAt,
   });
 
@@ -26,6 +29,7 @@ class Student extends Equatable {
     String? lastName,
     String? phoneNumber,
     ClassLevel? classLevel,
+    Gender? gender,
     DateTime? createdAt,
   }) {
     return Student(
@@ -34,11 +38,12 @@ class Student extends Equatable {
       lastName: lastName ?? this.lastName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       classLevel: classLevel ?? this.classLevel,
+      gender: gender ?? this.gender,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   @override
   List<Object?> get props =>
-      [id, firstName, lastName, phoneNumber, classLevel, createdAt];
+      [id, firstName, lastName, phoneNumber, classLevel, gender, createdAt];
 }

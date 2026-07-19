@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -28,8 +29,35 @@ class CashPage extends StatelessWidget {
   }
 }
 
-class _CashView extends StatelessWidget {
+/// Bir ayı (yıl + ay) benzersiz şekilde temsil eder — filtre anahtarı olarak
+/// kullanılıyor, gün bilgisiyle uğraşmaya gerek kalmıyor.
+class _MonthKey {
+  final int year;
+  final int month;
+  const _MonthKey(this.year, this.month);
+
+  factory _MonthKey.fromDate(DateTime date) => _MonthKey(date.year, date.month);
+
+  String get label =>
+      DateFormat('MMMM yyyy', 'tr_TR').format(DateTime(year, month));
+
+  @override
+  bool operator ==(Object other) =>
+      other is _MonthKey && other.year == year && other.month == month;
+
+  @override
+  int get hashCode => Object.hash(year, month);
+}
+
+class _CashView extends StatefulWidget {
   const _CashView();
+
+  @override
+  State<_CashView> createState() => _CashViewState();
+}
+
+class _CashViewState extends State<_CashView> {
+  _MonthKey? _selectedMonth;
 
   void _openForm(BuildContext context, {CashTransaction? transaction}) {
     final bloc = context.read<CashBloc>();
@@ -84,7 +112,7 @@ class _CashView extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Expanded(
               child: BlocBuilder<CashBloc, CashState>(
                 builder: (context, state) {
@@ -97,49 +125,87 @@ class _CashView extends StatelessWidget {
                     );
                   }
 
+                  // Kayıtlarda geçen ayları benzersiz şekilde çıkar, en
+                  // yeniden en eskiye sırala.
+                  final months = <_MonthKey>{
+                    for (final tx in state.transactions) _MonthKey.fromDate(tx.date),
+                  }.toList()
+                    ..sort((a, b) {
+                      final da = DateTime(a.year, a.month);
+                      final db = DateTime(b.year, b.month);
+                      return db.compareTo(da);
+                    });
+
+                  final filteredTransactions = _selectedMonth == null
+                      ? state.transactions
+                      : state.transactions
+                          .where((tx) =>
+                              _MonthKey.fromDate(tx.date) == _selectedMonth)
+                          .toList();
+
+                  double income = 0;
+                  double expense = 0;
+                  for (final tx in filteredTransactions) {
+                    if (tx.type == CashType.income) {
+                      income += tx.amount;
+                    } else {
+                      expense += tx.amount;
+                    }
+                  }
+                  final balance = income - expense;
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (months.isNotEmpty) ...[
+                        _MonthFilterBar(
+                          months: months,
+                          selected: _selectedMonth,
+                          onChanged: (month) =>
+                              setState(() => _selectedMonth = month),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       Row(
                         children: [
                           _SummaryCard(
                             label: 'Toplam Gelir',
-                            amount: state.summary.totalIncome,
+                            amount: income,
                             color: AppColors.mint,
                           ),
                           const SizedBox(width: 16),
                           _SummaryCard(
                             label: 'Toplam Gider',
-                            amount: state.summary.totalExpense,
+                            amount: expense,
                             color: AppColors.coral,
                           ),
                           const SizedBox(width: 16),
                           _SummaryCard(
                             label: 'Bakiye',
-                            amount: state.summary.balance,
-                            color: state.summary.balance >= 0
-                                ? AppColors.mint
-                                : AppColors.coral,
+                            amount: balance,
+                            color: balance >= 0 ? AppColors.mint : AppColors.coral,
                             emphasized: true,
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
                       Expanded(
-                        child: state.transactions.isEmpty
-                            ?  Center(
+                        child: filteredTransactions.isEmpty
+                            ? Center(
                                 child: Text(
-                                  'Henüz bir kayıt yok',
+                                  state.transactions.isEmpty
+                                      ? 'Henüz bir kayıt yok'
+                                      : 'Bu ayda kayıt yok',
                                   style: AppTextStyles.body,
                                 ),
                               )
                             : Card(
                                 child: ListView.separated(
-                                  itemCount: state.transactions.length,
+                                  itemCount: filteredTransactions.length,
                                   separatorBuilder: (_, __) =>
                                       const Divider(height: 1, color: AppColors.border),
                                   itemBuilder: (context, index) {
-                                    final tx = state.transactions[index];
+                                    final tx = filteredTransactions[index];
                                     final isIncome = tx.type == CashType.income;
                                     final color =
                                         isIncome ? AppColors.mint : AppColors.coral;
@@ -206,6 +272,72 @@ class _CashView extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MonthFilterBar extends StatelessWidget {
+  final List<_MonthKey> months;
+  final _MonthKey? selected;
+  final ValueChanged<_MonthKey?> onChanged;
+
+  const _MonthFilterBar({
+    required this.months,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          _FilterChip(
+            label: 'Tüm Aylar',
+            selected: selected == null,
+            onTap: () => onChanged(null),
+          ),
+          const SizedBox(width: 8),
+          for (final month in months) ...[
+            _FilterChip(
+              label: month.label,
+              selected: selected == month,
+              onTap: () => onChanged(month),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: AppColors.indigoSoft,
+      labelStyle: TextStyle(
+        color: selected ? AppColors.indigo : AppColors.textPrimary,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+      ),
+      side: BorderSide(color: selected ? AppColors.indigo : AppColors.border),
+      backgroundColor: AppColors.surface,
     );
   }
 }

@@ -28,12 +28,16 @@ class AddPaymentRequested extends PaymentEvent {
   List<Object?> get props => [studentId, amount, period, dueDate];
 }
 
-class MarkPaymentAsPaidRequested extends PaymentEvent {
+class RecordPaymentRequested extends PaymentEvent {
   final Payment payment;
-  const MarkPaymentAsPaidRequested(this.payment);
+  final double amountReceived;
+  const RecordPaymentRequested({
+    required this.payment,
+    required this.amountReceived,
+  });
 
   @override
-  List<Object?> get props => [payment];
+  List<Object?> get props => [payment, amountReceived];
 }
 
 class UpdatePaymentRequested extends PaymentEvent {
