@@ -17,7 +17,7 @@ import '../../features/payments/domain/usecases/add_payment.dart';
 import '../../features/payments/domain/usecases/delete_payment.dart';
 import '../../features/payments/domain/usecases/get_payment_summary.dart';
 import '../../features/payments/domain/usecases/get_payments.dart';
-import '../../features/payments/domain/usecases/mark_as_paid.dart';
+import '../../features/payments/domain/usecases/record_payment.dart';
 import '../../features/payments/domain/usecases/update_payment.dart';
 import '../../features/payments/presentation/bloc/payment_bloc.dart';
 
@@ -68,7 +68,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton(() => AddPayment(sl()));
   sl.registerLazySingleton(() => UpdatePayment(sl()));
   sl.registerLazySingleton(() => DeletePayment(sl()));
-  sl.registerLazySingleton(() => MarkAsPaid(sl()));
+  sl.registerLazySingleton(() => RecordPayment(sl()));
   sl.registerLazySingleton(() => GetPaymentSummary(sl()));
   sl.registerFactory(
     () => PaymentBloc(
@@ -76,7 +76,7 @@ Future<void> initDependencies() async {
       addPayment: sl(),
       updatePayment: sl(),
       deletePayment: sl(),
-      markAsPaid: sl(),
+      recordPayment: sl(),
       getPaymentSummary: sl(),
     ),
   );

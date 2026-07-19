@@ -17,6 +17,10 @@ class Payments extends Table {
   DateTimeColumn get dueDate => dateTime()();
   DateTimeColumn get paidDate => dateTime().nullable()();
 
+  /// Bu ödeme için şimdiye kadar tahsil edilen toplam tutar (kısmi ödemeler
+  /// dahil, kümülatif). amount'tan az olabilir (kısmi), eşit olabilir (tam).
+  RealColumn get paidAmount => real().withDefault(const Constant(0))();
+
   TextColumn get status => text()();
 
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

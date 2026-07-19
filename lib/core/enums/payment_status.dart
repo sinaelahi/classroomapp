@@ -1,6 +1,7 @@
-/// Bir ödemenin durumu: ödendi / ödenmedi / ödenecek (yaklaşan).
+/// Bir ödemenin durumu: ödendi / kısmi ödendi / ödenmedi / ödenecek (yaklaşan).
 enum PaymentStatus {
   paid('Ödendi'),
+  partial('Kısmi Ödendi'),
   unpaid('Ödenmedi'),
   upcoming('Ödenecek');
 

@@ -12,7 +12,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -24,6 +24,14 @@ class AppDatabase extends _$AppDatabase {
         // v1 -> v2: kasa (gelir/gider) sistemi eklendi.
         if (from < 2) {
           await m.createTable(cashTransactions);
+        }
+        // v2 -> v3: öğrencilere cinsiyet (gender) alanı eklendi.
+        if (from < 3) {
+          await m.addColumn(students, students.gender);
+        }
+        // v3 -> v4: ödemelere kısmi ödeme takibi (paidAmount) eklendi.
+        if (from < 4) {
+          await m.addColumn(payments, payments.paidAmount);
         }
       },
     );

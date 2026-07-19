@@ -50,6 +50,13 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
   late final GeneratedColumn<String> classLevel = GeneratedColumn<String>(
       'class_level', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _genderMeta = const VerificationMeta('gender');
+  @override
+  late final GeneratedColumn<String> gender = GeneratedColumn<String>(
+      'gender', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('male'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -60,7 +67,7 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
       defaultValue: currentDateAndTime);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, firstName, lastName, phoneNumber, classLevel, createdAt];
+      [id, firstName, lastName, phoneNumber, classLevel, gender, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -102,6 +109,10 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
     } else if (isInserting) {
       context.missing(_classLevelMeta);
     }
+    if (data.containsKey('gender')) {
+      context.handle(_genderMeta,
+          gender.isAcceptableOrUnknown(data['gender']!, _genderMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -125,6 +136,8 @@ class $StudentsTable extends Students with TableInfo<$StudentsTable, Student> {
           .read(DriftSqlType.string, data['${effectivePrefix}phone_number'])!,
       classLevel: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}class_level'])!,
+      gender: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}gender'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
     );
@@ -142,6 +155,7 @@ class Student extends DataClass implements Insertable<Student> {
   final String lastName;
   final String phoneNumber;
   final String classLevel;
+  final String gender;
   final DateTime createdAt;
   const Student(
       {required this.id,
@@ -149,6 +163,7 @@ class Student extends DataClass implements Insertable<Student> {
       required this.lastName,
       required this.phoneNumber,
       required this.classLevel,
+      required this.gender,
       required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -158,6 +173,7 @@ class Student extends DataClass implements Insertable<Student> {
     map['last_name'] = Variable<String>(lastName);
     map['phone_number'] = Variable<String>(phoneNumber);
     map['class_level'] = Variable<String>(classLevel);
+    map['gender'] = Variable<String>(gender);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -169,6 +185,7 @@ class Student extends DataClass implements Insertable<Student> {
       lastName: Value(lastName),
       phoneNumber: Value(phoneNumber),
       classLevel: Value(classLevel),
+      gender: Value(gender),
       createdAt: Value(createdAt),
     );
   }
@@ -182,6 +199,7 @@ class Student extends DataClass implements Insertable<Student> {
       lastName: serializer.fromJson<String>(json['lastName']),
       phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
       classLevel: serializer.fromJson<String>(json['classLevel']),
+      gender: serializer.fromJson<String>(json['gender']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -194,6 +212,7 @@ class Student extends DataClass implements Insertable<Student> {
       'lastName': serializer.toJson<String>(lastName),
       'phoneNumber': serializer.toJson<String>(phoneNumber),
       'classLevel': serializer.toJson<String>(classLevel),
+      'gender': serializer.toJson<String>(gender),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -204,6 +223,7 @@ class Student extends DataClass implements Insertable<Student> {
           String? lastName,
           String? phoneNumber,
           String? classLevel,
+          String? gender,
           DateTime? createdAt}) =>
       Student(
         id: id ?? this.id,
@@ -211,6 +231,7 @@ class Student extends DataClass implements Insertable<Student> {
         lastName: lastName ?? this.lastName,
         phoneNumber: phoneNumber ?? this.phoneNumber,
         classLevel: classLevel ?? this.classLevel,
+        gender: gender ?? this.gender,
         createdAt: createdAt ?? this.createdAt,
       );
   Student copyWithCompanion(StudentsCompanion data) {
@@ -222,6 +243,7 @@ class Student extends DataClass implements Insertable<Student> {
           data.phoneNumber.present ? data.phoneNumber.value : this.phoneNumber,
       classLevel:
           data.classLevel.present ? data.classLevel.value : this.classLevel,
+      gender: data.gender.present ? data.gender.value : this.gender,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -234,14 +256,15 @@ class Student extends DataClass implements Insertable<Student> {
           ..write('lastName: $lastName, ')
           ..write('phoneNumber: $phoneNumber, ')
           ..write('classLevel: $classLevel, ')
+          ..write('gender: $gender, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, firstName, lastName, phoneNumber, classLevel, createdAt);
+  int get hashCode => Object.hash(
+      id, firstName, lastName, phoneNumber, classLevel, gender, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -251,6 +274,7 @@ class Student extends DataClass implements Insertable<Student> {
           other.lastName == this.lastName &&
           other.phoneNumber == this.phoneNumber &&
           other.classLevel == this.classLevel &&
+          other.gender == this.gender &&
           other.createdAt == this.createdAt);
 }
 
@@ -260,6 +284,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
   final Value<String> lastName;
   final Value<String> phoneNumber;
   final Value<String> classLevel;
+  final Value<String> gender;
   final Value<DateTime> createdAt;
   const StudentsCompanion({
     this.id = const Value.absent(),
@@ -267,6 +292,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
     this.lastName = const Value.absent(),
     this.phoneNumber = const Value.absent(),
     this.classLevel = const Value.absent(),
+    this.gender = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   StudentsCompanion.insert({
@@ -275,6 +301,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
     required String lastName,
     required String phoneNumber,
     required String classLevel,
+    this.gender = const Value.absent(),
     this.createdAt = const Value.absent(),
   })  : firstName = Value(firstName),
         lastName = Value(lastName),
@@ -286,6 +313,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
     Expression<String>? lastName,
     Expression<String>? phoneNumber,
     Expression<String>? classLevel,
+    Expression<String>? gender,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
@@ -294,6 +322,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
       if (lastName != null) 'last_name': lastName,
       if (phoneNumber != null) 'phone_number': phoneNumber,
       if (classLevel != null) 'class_level': classLevel,
+      if (gender != null) 'gender': gender,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
@@ -304,6 +333,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
       Value<String>? lastName,
       Value<String>? phoneNumber,
       Value<String>? classLevel,
+      Value<String>? gender,
       Value<DateTime>? createdAt}) {
     return StudentsCompanion(
       id: id ?? this.id,
@@ -311,6 +341,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
       lastName: lastName ?? this.lastName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       classLevel: classLevel ?? this.classLevel,
+      gender: gender ?? this.gender,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -333,6 +364,9 @@ class StudentsCompanion extends UpdateCompanion<Student> {
     if (classLevel.present) {
       map['class_level'] = Variable<String>(classLevel.value);
     }
+    if (gender.present) {
+      map['gender'] = Variable<String>(gender.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -347,6 +381,7 @@ class StudentsCompanion extends UpdateCompanion<Student> {
           ..write('lastName: $lastName, ')
           ..write('phoneNumber: $phoneNumber, ')
           ..write('classLevel: $classLevel, ')
+          ..write('gender: $gender, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -401,6 +436,14 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
   late final GeneratedColumn<DateTime> paidDate = GeneratedColumn<DateTime>(
       'paid_date', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _paidAmountMeta =
+      const VerificationMeta('paidAmount');
+  @override
+  late final GeneratedColumn<double> paidAmount = GeneratedColumn<double>(
+      'paid_amount', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -415,8 +458,17 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
       requiredDuringInsert: false,
       defaultValue: currentDateAndTime);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, studentId, amount, period, dueDate, paidDate, status, createdAt];
+  List<GeneratedColumn> get $columns => [
+        id,
+        studentId,
+        amount,
+        period,
+        dueDate,
+        paidDate,
+        paidAmount,
+        status,
+        createdAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -458,6 +510,12 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
       context.handle(_paidDateMeta,
           paidDate.isAcceptableOrUnknown(data['paid_date']!, _paidDateMeta));
     }
+    if (data.containsKey('paid_amount')) {
+      context.handle(
+          _paidAmountMeta,
+          paidAmount.isAcceptableOrUnknown(
+              data['paid_amount']!, _paidAmountMeta));
+    }
     if (data.containsKey('status')) {
       context.handle(_statusMeta,
           status.isAcceptableOrUnknown(data['status']!, _statusMeta));
@@ -489,6 +547,8 @@ class $PaymentsTable extends Payments with TableInfo<$PaymentsTable, Payment> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}due_date'])!,
       paidDate: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}paid_date']),
+      paidAmount: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}paid_amount'])!,
       status: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
       createdAt: attachedDatabase.typeMapping
@@ -511,6 +571,10 @@ class Payment extends DataClass implements Insertable<Payment> {
   final String period;
   final DateTime dueDate;
   final DateTime? paidDate;
+
+  /// Bu ödeme için şimdiye kadar tahsil edilen toplam tutar (kısmi ödemeler
+  /// dahil, kümülatif). amount'tan az olabilir (kısmi), eşit olabilir (tam).
+  final double paidAmount;
   final String status;
   final DateTime createdAt;
   const Payment(
@@ -520,6 +584,7 @@ class Payment extends DataClass implements Insertable<Payment> {
       required this.period,
       required this.dueDate,
       this.paidDate,
+      required this.paidAmount,
       required this.status,
       required this.createdAt});
   @override
@@ -533,6 +598,7 @@ class Payment extends DataClass implements Insertable<Payment> {
     if (!nullToAbsent || paidDate != null) {
       map['paid_date'] = Variable<DateTime>(paidDate);
     }
+    map['paid_amount'] = Variable<double>(paidAmount);
     map['status'] = Variable<String>(status);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -548,6 +614,7 @@ class Payment extends DataClass implements Insertable<Payment> {
       paidDate: paidDate == null && nullToAbsent
           ? const Value.absent()
           : Value(paidDate),
+      paidAmount: Value(paidAmount),
       status: Value(status),
       createdAt: Value(createdAt),
     );
@@ -563,6 +630,7 @@ class Payment extends DataClass implements Insertable<Payment> {
       period: serializer.fromJson<String>(json['period']),
       dueDate: serializer.fromJson<DateTime>(json['dueDate']),
       paidDate: serializer.fromJson<DateTime?>(json['paidDate']),
+      paidAmount: serializer.fromJson<double>(json['paidAmount']),
       status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -577,6 +645,7 @@ class Payment extends DataClass implements Insertable<Payment> {
       'period': serializer.toJson<String>(period),
       'dueDate': serializer.toJson<DateTime>(dueDate),
       'paidDate': serializer.toJson<DateTime?>(paidDate),
+      'paidAmount': serializer.toJson<double>(paidAmount),
       'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -589,6 +658,7 @@ class Payment extends DataClass implements Insertable<Payment> {
           String? period,
           DateTime? dueDate,
           Value<DateTime?> paidDate = const Value.absent(),
+          double? paidAmount,
           String? status,
           DateTime? createdAt}) =>
       Payment(
@@ -598,6 +668,7 @@ class Payment extends DataClass implements Insertable<Payment> {
         period: period ?? this.period,
         dueDate: dueDate ?? this.dueDate,
         paidDate: paidDate.present ? paidDate.value : this.paidDate,
+        paidAmount: paidAmount ?? this.paidAmount,
         status: status ?? this.status,
         createdAt: createdAt ?? this.createdAt,
       );
@@ -609,6 +680,8 @@ class Payment extends DataClass implements Insertable<Payment> {
       period: data.period.present ? data.period.value : this.period,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
       paidDate: data.paidDate.present ? data.paidDate.value : this.paidDate,
+      paidAmount:
+          data.paidAmount.present ? data.paidAmount.value : this.paidAmount,
       status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -623,6 +696,7 @@ class Payment extends DataClass implements Insertable<Payment> {
           ..write('period: $period, ')
           ..write('dueDate: $dueDate, ')
           ..write('paidDate: $paidDate, ')
+          ..write('paidAmount: $paidAmount, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -630,8 +704,8 @@ class Payment extends DataClass implements Insertable<Payment> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, studentId, amount, period, dueDate, paidDate, status, createdAt);
+  int get hashCode => Object.hash(id, studentId, amount, period, dueDate,
+      paidDate, paidAmount, status, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -642,6 +716,7 @@ class Payment extends DataClass implements Insertable<Payment> {
           other.period == this.period &&
           other.dueDate == this.dueDate &&
           other.paidDate == this.paidDate &&
+          other.paidAmount == this.paidAmount &&
           other.status == this.status &&
           other.createdAt == this.createdAt);
 }
@@ -653,6 +728,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
   final Value<String> period;
   final Value<DateTime> dueDate;
   final Value<DateTime?> paidDate;
+  final Value<double> paidAmount;
   final Value<String> status;
   final Value<DateTime> createdAt;
   const PaymentsCompanion({
@@ -662,6 +738,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     this.period = const Value.absent(),
     this.dueDate = const Value.absent(),
     this.paidDate = const Value.absent(),
+    this.paidAmount = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -672,6 +749,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     required String period,
     required DateTime dueDate,
     this.paidDate = const Value.absent(),
+    this.paidAmount = const Value.absent(),
     required String status,
     this.createdAt = const Value.absent(),
   })  : studentId = Value(studentId),
@@ -686,6 +764,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     Expression<String>? period,
     Expression<DateTime>? dueDate,
     Expression<DateTime>? paidDate,
+    Expression<double>? paidAmount,
     Expression<String>? status,
     Expression<DateTime>? createdAt,
   }) {
@@ -696,6 +775,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
       if (period != null) 'period': period,
       if (dueDate != null) 'due_date': dueDate,
       if (paidDate != null) 'paid_date': paidDate,
+      if (paidAmount != null) 'paid_amount': paidAmount,
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -708,6 +788,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
       Value<String>? period,
       Value<DateTime>? dueDate,
       Value<DateTime?>? paidDate,
+      Value<double>? paidAmount,
       Value<String>? status,
       Value<DateTime>? createdAt}) {
     return PaymentsCompanion(
@@ -717,6 +798,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
       period: period ?? this.period,
       dueDate: dueDate ?? this.dueDate,
       paidDate: paidDate ?? this.paidDate,
+      paidAmount: paidAmount ?? this.paidAmount,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -743,6 +825,9 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
     if (paidDate.present) {
       map['paid_date'] = Variable<DateTime>(paidDate.value);
     }
+    if (paidAmount.present) {
+      map['paid_amount'] = Variable<double>(paidAmount.value);
+    }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
@@ -761,6 +846,7 @@ class PaymentsCompanion extends UpdateCompanion<Payment> {
           ..write('period: $period, ')
           ..write('dueDate: $dueDate, ')
           ..write('paidDate: $paidDate, ')
+          ..write('paidAmount: $paidAmount, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1135,6 +1221,7 @@ typedef $$StudentsTableCreateCompanionBuilder = StudentsCompanion Function({
   required String lastName,
   required String phoneNumber,
   required String classLevel,
+  Value<String> gender,
   Value<DateTime> createdAt,
 });
 typedef $$StudentsTableUpdateCompanionBuilder = StudentsCompanion Function({
@@ -1143,6 +1230,7 @@ typedef $$StudentsTableUpdateCompanionBuilder = StudentsCompanion Function({
   Value<String> lastName,
   Value<String> phoneNumber,
   Value<String> classLevel,
+  Value<String> gender,
   Value<DateTime> createdAt,
 });
 
@@ -1189,6 +1277,9 @@ class $$StudentsTableFilterComposer
 
   ColumnFilters<String> get classLevel => $composableBuilder(
       column: $table.classLevel, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get gender => $composableBuilder(
+      column: $table.gender, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -1239,6 +1330,9 @@ class $$StudentsTableOrderingComposer
   ColumnOrderings<String> get classLevel => $composableBuilder(
       column: $table.classLevel, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get gender => $composableBuilder(
+      column: $table.gender, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
@@ -1266,6 +1360,9 @@ class $$StudentsTableAnnotationComposer
 
   GeneratedColumn<String> get classLevel => $composableBuilder(
       column: $table.classLevel, builder: (column) => column);
+
+  GeneratedColumn<String> get gender =>
+      $composableBuilder(column: $table.gender, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -1320,6 +1417,7 @@ class $$StudentsTableTableManager extends RootTableManager<
             Value<String> lastName = const Value.absent(),
             Value<String> phoneNumber = const Value.absent(),
             Value<String> classLevel = const Value.absent(),
+            Value<String> gender = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               StudentsCompanion(
@@ -1328,6 +1426,7 @@ class $$StudentsTableTableManager extends RootTableManager<
             lastName: lastName,
             phoneNumber: phoneNumber,
             classLevel: classLevel,
+            gender: gender,
             createdAt: createdAt,
           ),
           createCompanionCallback: ({
@@ -1336,6 +1435,7 @@ class $$StudentsTableTableManager extends RootTableManager<
             required String lastName,
             required String phoneNumber,
             required String classLevel,
+            Value<String> gender = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
               StudentsCompanion.insert(
@@ -1344,6 +1444,7 @@ class $$StudentsTableTableManager extends RootTableManager<
             lastName: lastName,
             phoneNumber: phoneNumber,
             classLevel: classLevel,
+            gender: gender,
             createdAt: createdAt,
           ),
           withReferenceMapper: (p0) => p0
@@ -1395,6 +1496,7 @@ typedef $$PaymentsTableCreateCompanionBuilder = PaymentsCompanion Function({
   required String period,
   required DateTime dueDate,
   Value<DateTime?> paidDate,
+  Value<double> paidAmount,
   required String status,
   Value<DateTime> createdAt,
 });
@@ -1405,6 +1507,7 @@ typedef $$PaymentsTableUpdateCompanionBuilder = PaymentsCompanion Function({
   Value<String> period,
   Value<DateTime> dueDate,
   Value<DateTime?> paidDate,
+  Value<double> paidAmount,
   Value<String> status,
   Value<DateTime> createdAt,
 });
@@ -1451,6 +1554,9 @@ class $$PaymentsTableFilterComposer
 
   ColumnFilters<DateTime> get paidDate => $composableBuilder(
       column: $table.paidDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get paidAmount => $composableBuilder(
+      column: $table.paidAmount, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnFilters(column));
@@ -1503,6 +1609,9 @@ class $$PaymentsTableOrderingComposer
   ColumnOrderings<DateTime> get paidDate => $composableBuilder(
       column: $table.paidDate, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get paidAmount => $composableBuilder(
+      column: $table.paidAmount, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get status => $composableBuilder(
       column: $table.status, builder: (column) => ColumnOrderings(column));
 
@@ -1553,6 +1662,9 @@ class $$PaymentsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get paidDate =>
       $composableBuilder(column: $table.paidDate, builder: (column) => column);
+
+  GeneratedColumn<double> get paidAmount => $composableBuilder(
+      column: $table.paidAmount, builder: (column) => column);
 
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
@@ -1610,6 +1722,7 @@ class $$PaymentsTableTableManager extends RootTableManager<
             Value<String> period = const Value.absent(),
             Value<DateTime> dueDate = const Value.absent(),
             Value<DateTime?> paidDate = const Value.absent(),
+            Value<double> paidAmount = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
@@ -1620,6 +1733,7 @@ class $$PaymentsTableTableManager extends RootTableManager<
             period: period,
             dueDate: dueDate,
             paidDate: paidDate,
+            paidAmount: paidAmount,
             status: status,
             createdAt: createdAt,
           ),
@@ -1630,6 +1744,7 @@ class $$PaymentsTableTableManager extends RootTableManager<
             required String period,
             required DateTime dueDate,
             Value<DateTime?> paidDate = const Value.absent(),
+            Value<double> paidAmount = const Value.absent(),
             required String status,
             Value<DateTime> createdAt = const Value.absent(),
           }) =>
@@ -1640,6 +1755,7 @@ class $$PaymentsTableTableManager extends RootTableManager<
             period: period,
             dueDate: dueDate,
             paidDate: paidDate,
+            paidAmount: paidAmount,
             status: status,
             createdAt: createdAt,
           ),
