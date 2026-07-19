@@ -1,15 +1,14 @@
-/// Dershanedeki sabit sınıf seviyeleri listesi.
+/// Dershane seviye sistemi.
 /// Yeni bir seviye eklemek/çıkarmak istersen sadece bu enum'u güncellemen yeterli.
 enum ClassLevel {
-  sinif5('5. Sınıf'),
-  sinif6('6. Sınıf'),
-  sinif7('7. Sınıf'),
-  sinif8('8. Sınıf (LGS)'),
-  sinif9('9. Sınıf'),
-  sinif10('10. Sınıf'),
-  sinif11('11. Sınıf'),
-  sinif12('12. Sınıf (YKS)'),
-  mezun('Mezun');
+  starter('Starter'),
+  family1('Family 1'),
+  family2('Family 2'),
+  family3('Family 3'),
+  family4('Family 4'),
+  family5('Family 5'),
+  family6('Family 6'),
+  americanExpress('American Express');
 
   final String label;
   const ClassLevel(this.label);
@@ -17,7 +16,7 @@ enum ClassLevel {
   static ClassLevel fromName(String name) {
     return ClassLevel.values.firstWhere(
       (e) => e.name == name,
-      orElse: () => ClassLevel.sinif5,
+      orElse: () => ClassLevel.starter,
     );
   }
 }
