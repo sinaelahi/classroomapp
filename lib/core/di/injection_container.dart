@@ -21,6 +21,16 @@ import '../../features/payments/domain/usecases/mark_as_paid.dart';
 import '../../features/payments/domain/usecases/update_payment.dart';
 import '../../features/payments/presentation/bloc/payment_bloc.dart';
 
+import '../../features/cash/data/datasources/cash_local_datasource.dart';
+import '../../features/cash/data/repositories/cash_repository_impl.dart';
+import '../../features/cash/domain/repositories/cash_repository.dart';
+import '../../features/cash/domain/usecases/add_transaction.dart';
+import '../../features/cash/domain/usecases/delete_transaction.dart';
+import '../../features/cash/domain/usecases/get_cash_summary.dart';
+import '../../features/cash/domain/usecases/get_transactions.dart';
+import '../../features/cash/domain/usecases/update_transaction.dart';
+import '../../features/cash/presentation/bloc/cash_bloc.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
@@ -68,6 +78,26 @@ Future<void> initDependencies() async {
       deletePayment: sl(),
       markAsPaid: sl(),
       getPaymentSummary: sl(),
+    ),
+  );
+
+  // ---- Cash feature ----
+  sl.registerLazySingleton<CashLocalDataSource>(
+    () => CashLocalDataSourceImpl(sl()),
+  );
+  sl.registerLazySingleton<CashRepository>(() => CashRepositoryImpl(sl()));
+  sl.registerLazySingleton(() => GetTransactions(sl()));
+  sl.registerLazySingleton(() => AddTransaction(sl()));
+  sl.registerLazySingleton(() => UpdateTransaction(sl()));
+  sl.registerLazySingleton(() => DeleteTransaction(sl()));
+  sl.registerLazySingleton(() => GetCashSummary(sl()));
+  sl.registerFactory(
+    () => CashBloc(
+      getTransactions: sl(),
+      addTransaction: sl(),
+      updateTransaction: sl(),
+      deleteTransaction: sl(),
+      getCashSummary: sl(),
     ),
   );
 }
