@@ -5,6 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../shared/layouts/desktop_scaffold.dart';
+import '../../../../shared/widgets/fade_slide_in.dart';
 import '../../domain/entities/student.dart';
 import '../bloc/student_bloc.dart';
 import '../bloc/student_event.dart';
@@ -71,9 +72,9 @@ class _StudentListView extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Öğrenciler', style: AppTextStyles.heading1),
+                 Text('Öğrenciler', style: AppTextStyles.heading1),
                 FilledButton.icon(
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add_rounded),
                   label: const Text('Öğrenci Ekle'),
                   onPressed: () => _openStudentForm(context),
                 ),
@@ -92,7 +93,7 @@ class _StudentListView extends StatelessWidget {
                     );
                   }
                   if (state.students.isEmpty) {
-                    return const Center(
+                    return  Center(
                       child: Text(
                         'Henüz öğrenci eklenmedi',
                         style: AppTextStyles.body,
@@ -106,29 +107,35 @@ class _StudentListView extends StatelessWidget {
                           const Divider(height: 1, color: AppColors.border),
                       itemBuilder: (context, index) {
                         final student = state.students[index];
-                        return ListTile(
-                          title: Text(student.fullName),
-                          subtitle: Text(
-                            '${student.classLevel.label} · ${student.phoneNumber}',
-                          ),
-                          onTap: () => _openStudentForm(context, student: student),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined),
-                                onPressed: () =>
-                                    _openStudentForm(context, student: student),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () {
-                                  context.read<StudentBloc>().add(
-                                        DeleteStudentRequested(student.id!),
-                                      );
-                                },
-                              ),
-                            ],
+                        return FadeSlideIn(
+                          index: index,
+                          child: ListTile(
+                            title: Text(student.fullName, style: AppTextStyles.bodyMedium),
+                            subtitle: Text(
+                              '${student.classLevel.label} · ${student.phoneNumber}',
+                              style: AppTextStyles.caption,
+                            ),
+                            onTap: () => _openStudentForm(context, student: student),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined),
+                                  color: AppColors.textSecondary,
+                                  onPressed: () =>
+                                      _openStudentForm(context, student: student),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  color: AppColors.coral,
+                                  onPressed: () {
+                                    context.read<StudentBloc>().add(
+                                          DeleteStudentRequested(student.id!),
+                                        );
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
