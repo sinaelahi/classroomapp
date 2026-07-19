@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_sizes.dart';
 
@@ -14,9 +15,14 @@ class DesktopScaffold extends StatelessWidget {
   });
 
   static const _navItems = [
-    _NavItem(route: '/', label: 'Panel', icon: Icons.dashboard_outlined),
-    _NavItem(route: '/students', label: 'Öğrenciler', icon: Icons.people_outline),
-    _NavItem(route: '/payments', label: 'Ödemeler', icon: Icons.payments_outlined),
+    _NavItem(route: '/', label: 'Panel', icon: Icons.dashboard_rounded),
+    _NavItem(route: '/students', label: 'Öğrenciler', icon: Icons.people_alt_rounded),
+    _NavItem(route: '/payments', label: 'Ödemeler', icon: Icons.payments_rounded),
+    _NavItem(
+      route: '/cash',
+      label: 'Kasa',
+      icon: Icons.account_balance_wallet_rounded,
+    ),
   ];
 
   @override
@@ -30,11 +36,41 @@ class DesktopScaffold extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(24, 32, 24, 24),
-                  child: Text(
-                    'Dershanem',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(9),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.indigo, AppColors.indigoDark],
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'D',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Dershanem',
+                        style: GoogleFonts.sora(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 for (final item in _navItems)
@@ -47,7 +83,22 @@ class DesktopScaffold extends StatelessWidget {
             ),
           ),
           const VerticalDivider(width: 1, color: AppColors.border),
-          Expanded(child: child),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (widgetChild, animation) => FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.02),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: widgetChild,
+                ),
+              ),
+              child: KeyedSubtree(key: ValueKey(currentRoute), child: child),
+            ),
+          ),
         ],
       ),
     );
@@ -77,25 +128,41 @@ class _SidebarTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       child: Material(
-        color: selected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
           onTap: onTap,
-          child: Padding(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.indigoSoft : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Row(
               children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 3,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.indigo : Colors.transparent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Icon(
                   item.icon,
-                  size: 20,
-                  color: selected ? AppColors.primary : AppColors.textSecondary,
+                  size: 19,
+                  color: selected ? AppColors.indigo : AppColors.textSecondary,
                 ),
                 const SizedBox(width: 12),
                 Text(
                   item.label,
-                  style: TextStyle(
-                    color: selected ? AppColors.primary : AppColors.textPrimary,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: selected ? AppColors.indigo : AppColors.ink,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
