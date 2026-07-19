@@ -19,7 +19,10 @@ dependencies:
 
   # Local database
   drift: ^2.20.0
-  drift_flutter: ^0.2.0
+  # drift_flutter, intl ve window_manager henüz 1.0'a ulaşmadığı için (0.x)
+  # caret (^) burada minör sürüme kilitler; olası pub get hatalarını önlemek
+  # için aralığı ">=X <1.0.0" olarak geniş tutuyoruz.
+  drift_flutter: ">=0.2.0 <1.0.0"
 
   # Fonksiyonel hata yönetimi (Either<Failure, T>)
   fpdart: ^1.1.0
@@ -28,12 +31,15 @@ dependencies:
   go_router: ^14.2.0
 
   # Formatlama
-  intl: ^0.19.0
+  intl: ">=0.19.0 <1.0.0"
 
   # Masaüstü pencere yönetimi
-  window_manager: ^0.4.2
+  window_manager: ">=0.4.2 <1.0.0"
 
   cupertino_icons: ^1.0.8
+
+  # Tipografi (Sora + Inter + IBM Plex Mono)
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:
