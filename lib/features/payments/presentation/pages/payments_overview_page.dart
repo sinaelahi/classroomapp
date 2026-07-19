@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
@@ -7,6 +8,9 @@ import '../../../../core/enums/payment_status.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/layouts/desktop_scaffold.dart';
+import '../../../../shared/widgets/animated_count.dart';
+import '../../../../shared/widgets/fade_slide_in.dart';
+import '../../../../shared/widgets/hover_lift.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../students/domain/entities/student.dart';
 import '../../../students/presentation/bloc/student_bloc.dart';
@@ -102,9 +106,9 @@ class _PaymentsOverviewView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Ödemeler', style: AppTextStyles.heading1),
+                    Text('Ödemeler', style: AppTextStyles.heading1),
                     FilledButton.icon(
-                      icon: const Icon(Icons.add),
+                      icon: const Icon(Icons.add_rounded),
                       label: const Text('Ödeme Ekle'),
                       onPressed: () => _openPaymentForm(context, students),
                     ),
@@ -125,23 +129,26 @@ class _PaymentsOverviewView extends StatelessWidget {
                               _SummaryCard(
                                 label: 'Ödenen',
                                 amount: state.summary.totalPaidAmount,
+                                color: AppColors.mint,
                               ),
                               const SizedBox(width: 16),
                               _SummaryCard(
                                 label: 'Ödenmeyen',
                                 amount: state.summary.totalUnpaidAmount,
+                                color: AppColors.coral,
                               ),
                               const SizedBox(width: 16),
                               _SummaryCard(
                                 label: 'Ödenecek',
                                 amount: state.summary.totalUpcomingAmount,
+                                color: AppColors.amber,
                               ),
                             ],
                           ),
                           const SizedBox(height: 24),
                           Expanded(
                             child: state.payments.isEmpty
-                                ? const Center(
+                                ?  Center(
                                     child: Text(
                                       'Henüz ödeme kaydı yok',
                                       style: AppTextStyles.body,
@@ -151,47 +158,57 @@ class _PaymentsOverviewView extends StatelessWidget {
                                     child: ListView.separated(
                                       itemCount: state.payments.length,
                                       separatorBuilder: (_, __) =>
-                                          const Divider(height: 1),
+                                          const Divider(height: 1, color: AppColors.border),
                                       itemBuilder: (context, index) {
                                         final payment = state.payments[index];
-                                        return ListTile(
-                                          title: Text(
-                                            _studentName(students, payment.studentId),
-                                          ),
-                                          subtitle: Text(
-                                            '${payment.period} · Vade: '
-                                            '${DateFormatter.format(payment.dueDate)}',
-                                          ),
-                                          onTap: () => _openPaymentForm(
-                                            context,
-                                            students,
-                                            payment: payment,
-                                          ),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(CurrencyFormatter.format(payment.amount)),
-                                              const SizedBox(width: 12),
-                                              StatusBadge(status: payment.status),
-                                              if (payment.status != PaymentStatus.paid)
+                                        return FadeSlideIn(
+                                          index: index,
+                                          child: ListTile(
+                                            title: Text(
+                                              _studentName(students, payment.studentId),
+                                              style: AppTextStyles.bodyMedium,
+                                            ),
+                                            subtitle: Text(
+                                              '${payment.period} · Vade: '
+                                              '${DateFormatter.format(payment.dueDate)}',
+                                              style: AppTextStyles.caption,
+                                            ),
+                                            onTap: () => _openPaymentForm(
+                                              context,
+                                              students,
+                                              payment: payment,
+                                            ),
+                                            trailing: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  CurrencyFormatter.format(payment.amount),
+                                                  style: AppTextStyles.figureSmall,
+                                                ),
+                                                const SizedBox(width: 12),
+                                                StatusBadge(status: payment.status),
+                                                if (payment.status != PaymentStatus.paid)
+                                                  IconButton(
+                                                    icon: const Icon(Icons.check_circle_outline),
+                                                    color: AppColors.mint,
+                                                    tooltip: 'Ödendi olarak işaretle',
+                                                    onPressed: () {
+                                                      context.read<PaymentBloc>().add(
+                                                            MarkPaymentAsPaidRequested(payment),
+                                                          );
+                                                    },
+                                                  ),
                                                 IconButton(
-                                                  icon: const Icon(Icons.check_circle_outline),
-                                                  tooltip: 'Ödendi olarak işaretle',
+                                                  icon: const Icon(Icons.delete_outline),
+                                                  color: AppColors.textSecondary,
                                                   onPressed: () {
                                                     context.read<PaymentBloc>().add(
-                                                          MarkPaymentAsPaidRequested(payment),
+                                                          DeletePaymentRequested(payment.id!),
                                                         );
                                                   },
                                                 ),
-                                              IconButton(
-                                                icon: const Icon(Icons.delete_outline),
-                                                onPressed: () {
-                                                  context.read<PaymentBloc>().add(
-                                                        DeletePaymentRequested(payment.id!),
-                                                      );
-                                                },
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         );
                                       },
@@ -215,24 +232,42 @@ class _PaymentsOverviewView extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   final String label;
   final double amount;
-  const _SummaryCard({required this.label, required this.amount});
+  final Color color;
+  const _SummaryCard({
+    required this.label,
+    required this.amount,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: AppTextStyles.caption),
-              const SizedBox(height: 8),
-              Text(
-                CurrencyFormatter.format(amount),
-                style: AppTextStyles.heading2,
-              ),
-            ],
+      child: HoverLift(
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(label, style: AppTextStyles.caption),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                AnimatedCount(
+                  value: amount,
+                  formatter: CurrencyFormatter.format,
+                  style: AppTextStyles.figure,
+                ),
+              ],
+            ),
           ),
         ),
       ),
