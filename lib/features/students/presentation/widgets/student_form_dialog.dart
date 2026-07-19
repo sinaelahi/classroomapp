@@ -39,7 +39,7 @@ class _StudentFormDialogState extends State<StudentFormDialog> {
     _firstNameController = TextEditingController(text: s?.firstName ?? '');
     _lastNameController = TextEditingController(text: s?.lastName ?? '');
     _phoneController = TextEditingController(text: s?.phoneNumber ?? '');
-    _selectedLevel = s?.classLevel ?? ClassLevel.sinif5;
+    _selectedLevel = s?.classLevel ?? ClassLevel.family5;
   }
 
   @override
